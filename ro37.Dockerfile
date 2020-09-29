@@ -29,7 +29,7 @@ RUN adduser riscos && \
 
 USER root
 RUN apt-get update && \
-    DEBIAN_FRONTEND="noninteractive"  apt-get install -y tightvncserver fluxbox \
+    DEBIAN_FRONTEND="noninteractive"  apt-get install -y tigervnc-standalone-server fluxbox \
                         libqt5gui5 \
                         libqt5multimedia5-plugins \
                      && \
@@ -40,5 +40,5 @@ USER riscos
 COPY --from=builder /home/riscos /home/riscos
 
 WORKDIR /home/riscos
-CMD export DISPLAY=:1 USER=riscos && vncserver >/dev/null 2>/dev/null && cd rpcemu && ./rpcemu-recompiler
+CMD export DISPLAY=:1 USER=riscos && vncserver -geometry 1280x1024 -localhost no >/dev/null 2>/dev/null && cd rpcemu && ./rpcemu-recompiler
 EXPOSE 5901

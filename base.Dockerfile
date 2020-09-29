@@ -11,7 +11,7 @@ RUN adduser riscos && \
 # The password for the VNC server is 'password'.
 USER root
 RUN apt-get update && \
-    DEBIAN_FRONTEND="noninteractive"  apt-get install -y tightvncserver fluxbox locales \
+    DEBIAN_FRONTEND="noninteractive"  apt-get install -y tigervnc-standalone-server fluxbox locales \
                         build-essential \
                         qtbase5-dev \
                         qtmultimedia5-dev \
@@ -46,5 +46,5 @@ RUN wget -O rpcemu-${rpcemu_version}.tar.gz "https://www.marutan.net/rpcemu/cgi/
 
 RUN sed -i s/sound_enabled=1/sound_enabled=0/ rpcemu/rpc.cfg
 
-CMD export DISPLAY=:1 USER=riscos && vncserver >/dev/null 2>/dev/null && cd rpcemu && ./rpcemu-recompiler
+CMD export DISPLAY=:1 USER=riscos && vncserver -geometry 1280x1024 -localhost no >/dev/null 2>/dev/null && cd rpcemu && ./rpcemu-recompiler
 EXPOSE 5901
