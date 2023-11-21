@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This repository contains the docker build commands for the Docker hub 
+This repository contains the docker build commands for the Docker hub
 repositories:
 
 * https://hub.docker.com/r/gerph/rpcemu-base
@@ -56,3 +56,12 @@ You can replace the entire HostFS disc by specifying a mount point at `/riscos`,
 ```
 docker run -it -v $PWD:/riscos --rm -p 5901:5901 gerph/rpcemu-3.7
 ```
+
+## Image tags
+
+The following tags (and images) are available:
+
+* `1` (`gerph/rpcemu-3.7:1`, `gerph/rpcemu-5:1`) - RPCEmu 0.9.3, using the original bundles. These images use a different file layout, with the hostfs directory at `/home/riscos/rpcemu/hostfs` instead of `/riscos`.
+* `2` (`gerph/rpcemu-3.7:2`, `gerph/rpcemu-5:2`) - RPCEmu 0.9.4, using the 0.9.4 bundles.
+* `latest` - same as `2`.
+
