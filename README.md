@@ -11,7 +11,7 @@ repositories:
 
 These docker images contain:
 
-* An Ubuntu 20.04 OS.
+* An Ubuntu 24.04 OS.
 * A VNC server.
 * An installation of RPCEmu.
 * (depending on the container) The RISC OS 5 or RISC OS 3.7 images from https://www.marutan.net/rpcemu/easystart.html.
@@ -31,8 +31,8 @@ To build individual images, use the targets `base`, `ro37`, or `ro5`.
 To use the images:
 
 ```
-docker run -it --rm -p 5901:5901 gerph/rpcemu-3.7
-docker run -it --rm -p 5901:5901 gerph/rpcemu-5
+docker run -it --init --rm -p 5901:5901 gerph/rpcemu-3.7
+docker run -it --init --rm -p 5901:5901 gerph/rpcemu-5
 ```
 
 Then use a VNC client to connect to VNC on localhost port 1 (which might
@@ -44,8 +44,8 @@ Closing RPCEmu will terminate the docker container.
 To access a host directory from within the container, start the docker process with a volume mapping, thus:
 
 ```
-docker run -it -v $PWD:/riscos/Shared --rm -p 5901:5901 gerph/rpcemu-3.7
-docker run -it -v $PWD:/riscos/Shared --rm -p 5901:5901 gerph/rpcemu-5
+docker run -it --init -v $PWD:/riscos/Shared --rm -p 5901:5901 gerph/rpcemu-3.7
+docker run -it --init -v $PWD:/riscos/Shared --rm -p 5901:5901 gerph/rpcemu-5
 ```
 
 This shares your current working directory as a directory called
@@ -54,14 +54,15 @@ This shares your current working directory as a directory called
 You can replace the entire HostFS disc by specifying a mount point at `/riscos`, eg:
 
 ```
-docker run -it -v $PWD:/riscos --rm -p 5901:5901 gerph/rpcemu-3.7
+docker run -it --init -v $PWD:/riscos --rm -p 5901:5901 gerph/rpcemu-3.7
 ```
 
 ## Image tags
 
 The following tags (and images) are available:
 
-* `1` (`gerph/rpcemu-3.7:1`, `gerph/rpcemu-5:1`) - RPCEmu 0.9.3, using the original bundles. These images use a different file layout, with the hostfs directory at `/home/riscos/rpcemu/hostfs` instead of `/riscos`.
-* `2` (`gerph/rpcemu-3.7:2`, `gerph/rpcemu-5:2`) - RPCEmu 0.9.4, using the 0.9.4 bundles.
-* `latest` - same as `2`.
+* `1` (`gerph/rpcemu-3.7:1`, `gerph/rpcemu-5:1`) - RPCEmu 0.9.3, using the original bundles, Ubuntu 20.04. These images use a different file layout, with the hostfs directory at `/home/riscos/rpcemu/hostfs` instead of `/riscos`.
+* `2` (`gerph/rpcemu-3.7:2`, `gerph/rpcemu-5:2`) - RPCEmu 0.9.4, using the 0.9.4 bundles, Ubuntu 20.04.
+* `3` (`gerph/rpcemu-3.7:3`, `gerph/rpcemu-5:3`) - RPCEmu 0.9.5, using the 0.9.5 bundles, Ubuntu 24.04.
+* `latest` - same as `3`.
 

@@ -10,12 +10,12 @@
 #   /riscos - The RPCEmu `hostfs` directory
 #   /riscos-roms - a directory containing ROMs
 
-FROM ubuntu:20.04
+FROM ubuntu:24.04
 
 ARG RPCEMU_VERSION=0.9.3
 
 # Add user we're going to run under (without a password)
-RUN adduser riscos && \
+RUN useradd riscos && \
     mkdir -p /home/riscos && \
     chown -R riscos:riscos /home/riscos
 
@@ -36,7 +36,7 @@ RUN apt-get update && \
     echo "29g8/XJ6FFg=" | base64 -d > /home/riscos/.vnc/passwd && \
     chown -R riscos:riscos /home/riscos/.vnc && \
     chmod 0600 /home/riscos/.vnc/passwd && \
-    pip3 install gdown && \
+    pip3 install --break-system-packages gdown && \
     rm -rf ~/.cache/pip /var/lib/apt/lists && \
     mkdir -p /rpcemu /riscos /riscos-roms && \
     chown riscos:riscos /rpcemu /riscos /riscos-roms && \
@@ -70,6 +70,6 @@ ADD --chown=riscos:riscos fluxbox-init /home/riscos/.fluxbox/init
 ADD --chown=riscos:riscos fluxbox-menu /home/riscos/.fluxbox/menu
 ADD --chown=riscos:riscos fluxbox-windowmenu /home/riscos/.fluxbox/windowmenu
 
-ENV PATH "$PATH:/rpcemu"
-CMD export DISPLAY=:1 USER=riscos && vncserver -geometry 1280x1024 -localhost no >/dev/null 2>/dev/null && cd rpcemu && ./rpcemu-recompiler
+ENV PATH="$PATH:/rpcemu"
+CMD ["bash", "-c", "export DISPLAY=:1 USER=riscos && vncserver -geometry 1280x1024 -localhost no >/dev/null 2>/dev/null && cd rpcemu && ./rpcemu-recompiler"]
 EXPOSE 5901
