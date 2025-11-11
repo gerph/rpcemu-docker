@@ -1,0 +1,315 @@
+/*******************************************************************
+ * File:     i_screeninfo
+ * Purpose:  Information about the screen
+ * Author:   Justin Fletcher
+ ******************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include "swis.h"
+
+#include "i_screeninfo.h"
+
+/* Define this to debug this file */
+//#define DEBUG
+
+#ifdef DEBUG
+#define dprintf if (1) _swix(0x104,0), printf("%i: ", clock()), printf
+#else
+#define dprintf if (0) printf
+#endif
+
+void __swi(OS_WriteN + 0x20000) os_writen(char *p, int l);
+
+
+#define ModeVariable_ModeFlags      (0)
+#define ModeVariable_ScrRCol        (1)
+#define ModeVariable_ScrBRow        (2)
+#define ModeVariable_NColour        (3)
+#define ModeVariable_XEigFactor     (4)
+#define ModeVariable_YEigFactor     (5)
+#define ModeVariable_LineLength     (6)
+#define ModeVariable_ScreenSize     (7)
+#define ModeVariable_YShftFactor    (8)
+#define ModeVariable_Log2BPP        (9)
+#define ModeVariable_Log2BPC        (10)
+#define ModeVariable_XWindLimit     (11)
+#define ModeVariable_YWindLimit     (12)
+
+#define VduVariable_ScreenStart     (0x94)
+#define VduVariable_DisplayStart    (0x95)
+
+
+uint8_t *screenbank_base[MAX_BANKS];
+
+/*************************************************** Gerph *********
+ Function:      screen_getsize
+ Description:   Read the current size of the screen in pixels and OS units
+ Parameters:    size-> the screensize_t structure to fill in
+ Returns:       1 for success, 0 for failure
+ ******************************************************************/
+int screen_getsize(screensize_t *size)
+{
+  unsigned long vdu_input[8] = {ModeVariable_XWindLimit,
+                                ModeVariable_YWindLimit,
+                                ModeVariable_XEigFactor,
+                                ModeVariable_YEigFactor,
+                                ModeVariable_ScrRCol,
+                                ModeVariable_ScrBRow,
+                                ModeVariable_Log2BPP,
+                                -1};
+  unsigned long vdu_output[7];
+  _kernel_swi_regs regs;
+  _kernel_oserror *err;
+
+  regs.r[0] = (int)vdu_input;
+  regs.r[1] = (int)vdu_output;
+
+  err = _kernel_swi(OS_ReadVduVariables, &regs, &regs);
+  if (err)
+  {
+    dprintf("Error whilst getting screen size: %s\n", err->errmess);
+    return 0;
+  }
+
+  size->xeig = vdu_output[2];
+  size->yeig = vdu_output[3];
+  size->width = vdu_output[0] + 1;
+  size->height = vdu_output[1] + 1;
+  size->oswidth = (vdu_output[0] + 1) << vdu_output[2];
+  size->osheight = (vdu_output[1] + 1) << vdu_output[3];
+  size->textwidth = vdu_output[4] + 1;
+  size->textheight = vdu_output[5] + 1;
+  size->bpp = (1<<vdu_output[6]);
+  dprintf("Screen info: %i x %i (OS %i x %i), eigen %i x %i, text %i x %i, bpp %i\n",
+          size->width, size->height,
+          size->oswidth, size->osheight,
+          size->xeig, size->yeig,
+          size->textwidth, size->textheight,
+          size->bpp);
+  return 1;
+}
+
+
+int screen_getmodevariable(int var)
+{
+  _kernel_swi_regs regs;
+  _kernel_oserror *err;
+  int carry = 0;
+
+  regs.r[0] = -1;
+  regs.r[1] = var;
+
+  err = _kernel_swi_c(OS_ReadModeVariable, &regs, &regs, &carry);
+  if (err || carry)
+    return -1;
+  return regs.r[2];
+}
+
+
+uint8_t *screen_getbase(void)
+{
+  unsigned long     vdu_input[2] = {VduVariable_ScreenStart, -1};
+  unsigned long     vdu_output[2];
+  _kernel_swi_regs regs;
+  _kernel_oserror *err;
+
+  /* get screen base address */
+
+  regs.r[0] = (int)vdu_input;
+  regs.r[1] = (int)vdu_output;
+
+  err = _kernel_swi(OS_ReadVduVariables, &regs, &regs);
+  if (err)
+    return NULL;
+  return (uint8_t *)vdu_output[0];
+}
+
+
+#define OSByte_SelectScreenRender (0x70)
+
+/*************************************************** Gerph *********
+ Function:      screen_countbanks
+ Description:   Update the bases of the screen banks
+ Parameters:    banks = number of banks we want to use
+ Returns:       number of banks that were valid
+ ******************************************************************/
+int screen_countbanks(int banks)
+{
+    _kernel_oserror *err;
+    char *msg;
+    int current_bank;
+    int last_bank;
+    int validbanks = 0;
+    int i;
+    if (banks > MAX_BANKS)
+        banks = MAX_BANKS;
+
+    /* Read the current render bank */
+    err = _swix(OS_Byte, _INR(0, 1)|_OUT(1), OSByte_SelectScreenRender, 0,
+                                             &current_bank);
+    if (err)
+        return -1;
+    dprintf("Finding the base of each screen bank, current bank is %i\n", current_bank);
+
+    /* For each of the banks, select the bank for rendering, then read
+     * the address of the base.
+     * This is not ideal - we should probably select the bank on each frame,
+     * but that would be slower and might not even be sane.
+     */
+    last_bank = current_bank;
+    for (i=0; i<banks; i++)
+    {
+        uint8_t *base;
+        err = _swix(OS_Byte, _INR(0, 1), OSByte_SelectScreenRender, i + 1);
+        if (err)
+        {
+            /* If we got an error, we were unable to select the bank,
+             * So we're done looking for banks now.
+             */
+            dprintf("Error selecting bank %i: %s\n", i + 1, err->errmess);
+            break;
+        }
+        base = screen_getbase();
+        if (base == NULL)
+        {
+            /* We couldn't read the screen base, so this display is clearly
+             * not valid.
+             */
+            dprintf("No valid screen base for bank %i\n", i + 1);
+            break;
+        }
+        if (i != 0)
+        {
+            int j;
+            int duplicate_bank = 0;
+            for (j=0; j<i; j++)
+            {
+                if (screenbank_base[j] == base)
+                {
+                    /* The current bank has the same base as a prior bank.
+                     * Therefore, let's just give up.
+                     */
+                    dprintf("Bank %i is a duplicate of bank %i\n", i + 1, j + 1);
+                    duplicate_bank = 1;
+                    break;
+                }
+            }
+            if (duplicate_bank)
+            {
+                break;
+            }
+        }
+        screenbank_base[i] = base;
+        validbanks += 1;
+    }
+
+done:
+    _swix(OS_Byte, _INR(0, 1), OSByte_SelectScreenRender, current_bank);
+    if (err)
+        return -1;
+    return validbanks;
+}
+
+
+/*************************************************** Gerph *********
+ Function:      screen_clear
+ Description:   Clear screen fully
+ Parameters:    none
+ Returns:       none
+ ******************************************************************/
+void screen_clear(void)
+{
+    _swix(0x100 + 26, 0); /* Reset text and graphics windows */
+    _swix(ColourTrans_SetGCOL, _IN(0)|_INR(3, 4), 0x00000000, (1<<7), 0); /* Set background graphics to black */
+    _swix(0x100 + 16, 0); /* CLG (mustn't use CLS, as the text window may not cover the whole screen) */
+}
+
+
+/*************************************************** Gerph *********
+ Function:      screen_textcursor
+ Description:   Show or hide the text cursor
+ Parameters:    none
+ Returns:       none
+ ******************************************************************/
+void screen_textcursor(int show)
+{
+    if (show)
+    {
+        static char s[] = {23, 0, 10, 48, 0, 0, 0, 0, 0, 0};
+        os_writen(s, sizeof(s));
+    }
+    else
+    {
+        static char s[] = {23, 0, 10, 32, 0, 0, 0, 0, 0, 0};
+        os_writen(s, sizeof(s));
+    }
+}
+
+
+/*************************************************** Gerph *********
+ Function:      screen_textwindow
+ Description:   Make a text window
+ Parameters:    x0, y0 = top left of the text window (use -1 for x0/y0 to centre).
+                width, height = the width and height of the window (use -1 to clear).
+ Returns:       none
+ ******************************************************************/
+void screen_textwindow(int x0, int y0, int width, int height)
+{
+    if (width < 0 || height < 0)
+    {
+        _swix(0x100 + 26, 0); /* Reset text and graphics windows */
+    }
+    else
+    {
+        static char s[] = {28, 0, 0, 0, 0};
+        if (x0 == -1 || y0 == -1)
+        {
+            screensize_t ssize;
+            if (!screen_getsize(&ssize))
+            {
+                if (x0 == -1)
+                    x0 = 0;
+                if (y0 == -1)
+                    y0 = 0;
+            }
+            else
+            {
+                /* We can centre */
+                if (x0 == -1)
+                    x0 = (ssize.textwidth - width) / 2;
+                if (y0 == -1)
+                    y0 = (ssize.textheight - height) / 2;
+                if (x0 < 0)
+                {
+                    x0 = 0;
+                    width = ssize.textwidth;
+                }
+                if (y0 < 0)
+                {
+                    y0 = 0;
+                    height = ssize.textheight;
+                }
+            }
+        }
+        s[1] = x0;
+        s[4] = y0;
+        s[2] = y0 + height - 1;
+        s[3] = x0 + width - 1;
+        os_writen(s, sizeof(s));
+    }
+}
+
+
+/*************************************************** Gerph *********
+ Function:      screen_textwindow_full
+ Description:   Make a text window that is the full screen
+ Parameters:    none
+ Returns:       none
+ ******************************************************************/
+void screen_textwindow_full(void)
+{
+    /* A screen mode cannot be > 255 characters wide or high, so this should always
+     * provide a full screen window. */
+    screen_textwindow(-1, -1, 256, 256);
+}

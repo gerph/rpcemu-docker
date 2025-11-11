@@ -1,0 +1,103 @@
+/*******************************************************************
+ * File:     i_screeninfo
+ * Purpose:  Information about the screen
+ * Author:   Justin Fletcher
+ ******************************************************************/
+
+#ifndef I_SCREENINFO_H
+#define I_SCREENINFO_H
+
+#include <stdint.h>
+
+#define MAX_BANKS (3)
+extern uint8_t *screenbank_base[MAX_BANKS];
+
+#define ModeVariable_ModeFlags      (0)
+#define ModeVariable_ScrRCol        (1)
+#define ModeVariable_ScrBRow        (2)
+#define ModeVariable_NColour        (3)
+#define ModeVariable_XEigFactor     (4)
+#define ModeVariable_YEigFactor     (5)
+#define ModeVariable_LineLength     (6)
+#define ModeVariable_ScreenSize     (7)
+#define ModeVariable_YShftFactor    (8)
+#define ModeVariable_Log2BPP        (9)
+#define ModeVariable_Log2BPC        (10)
+#define ModeVariable_XWindLimit     (11)
+#define ModeVariable_YWindLimit     (12)
+
+#define VduVariable_ScreenStart     (0x94)
+#define VduVariable_DisplayStart    (0x95)
+
+typedef struct screensize_s {
+    int xeig;
+    int yeig;
+    int width;
+    int height;
+    int oswidth;
+    int osheight;
+    int textwidth;
+    int textheight;
+    int bpp;
+} screensize_t;
+
+/*************************************************** Gerph *********
+ Function:      screen_getsize
+ Description:   Read the current size of the screen in pixels and OS units
+ Parameters:    size-> the screensize_t structure to fill in
+ Returns:       1 for success, 0 for failure
+ ******************************************************************/
+int screen_getsize(screensize_t *size);
+
+
+int screen_getmodevariable(int var);
+
+
+uint8_t *screen_getbase(void);
+
+/*************************************************** Gerph *********
+ Function:      screen_countbanks
+ Description:   Update the bases of the screen banks
+ Parameters:    banks = number of banks we want to use
+ Returns:       number of banks that were valid
+ ******************************************************************/
+int screen_countbanks(int banks);
+
+
+/*************************************************** Gerph *********
+ Function:      screen_clear
+ Description:   Clear screen fully
+ Parameters:    none
+ Returns:       none
+ ******************************************************************/
+void screen_clear(void);
+
+
+/*************************************************** Gerph *********
+ Function:      screen_textcursor
+ Description:   Show or hide the text cursor
+ Parameters:    none
+ Returns:       none
+ ******************************************************************/
+void screen_textcursor(int show);
+
+
+/*************************************************** Gerph *********
+ Function:      screen_textwindow
+ Description:   Make a text window
+ Parameters:    x0, y0 = top left of the text window (use -1 for x0/y0 to centre).
+                width, height = the width and height of the window (use -1 to clear).
+ Returns:       none
+ ******************************************************************/
+void screen_textwindow(int x0, int y0, int width, int height);
+
+/*************************************************** Gerph *********
+ Function:      screen_textwindow_full
+ Description:   Make a text window that is the full screen
+ Parameters:    none
+ Returns:       1 for success, 0 for failure
+ ******************************************************************/
+void screen_textwindow_full(void);
+
+
+#endif
