@@ -65,5 +65,6 @@ The following tags (and images) are available:
 * `1` (`gerph/rpcemu-3.7:1`, `gerph/rpcemu-5:1`) - RPCEmu 0.9.3, using the original bundles, Ubuntu 20.04. These images use a different file layout, with the hostfs directory at `/home/riscos/rpcemu/hostfs` instead of `/riscos`.
 * `2` (`gerph/rpcemu-3.7:2`, `gerph/rpcemu-5:2`) - RPCEmu 0.9.4, using the 0.9.4 bundles, Ubuntu 20.04.
 * `3` (`gerph/rpcemu-3.7:3`, `gerph/rpcemu-5:3`) - RPCEmu 0.9.5, using the 0.9.5 bundles, Ubuntu 24.04.
-* `latest` - same as `3`.
+* `4` (`gerph/rpcemu-3.7:4`, `gerph/rpcemu-5:4`) - RPCEmu 0.9.5, using the 0.9.5 bundles, Ubuntu 24.04, with auto-resize.
+* `latest` - same as `4`.
 
