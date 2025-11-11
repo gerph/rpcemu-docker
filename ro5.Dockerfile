@@ -53,6 +53,7 @@ RUN export DEBIAN_FRONTEND="noninteractive" ; \
     apt-get install -y tigervnc-standalone-server fluxbox \
                         libqt5gui5 \
                         libqt5multimedia5-plugins \
+                        xcvt x11-utils wmctrl \
                      && \
     rm -rf ~/.cache/pip /var/lib/apt/lists
 
@@ -61,11 +62,13 @@ COPY --from=builder /home/riscos /home/riscos
 COPY --from=builder /rpcemu /rpcemu
 COPY --from=builder /riscos /riscos
 COPY --from=builder /riscos-roms /riscos-roms
+COPY VNCResize,ffa /riscos/!Boot/Choices/Boot/PreDesk/VNCResize,ffa
 
 USER root
 RUN chown -R riscos:riscos /rpcemu /riscos /riscos-roms
-COPY start-rpcemu.sh /usr/local/bin/start-rpcemu.sh
-RUN chmod 755 /usr/local/bin/start-rpcemu.sh
+COPY rpcemu-start.sh /usr/local/bin/rpcemu-start.sh
+COPY rpcemu-sync-size.sh /usr/local/bin/rpcemu-sync-size.sh
+RUN chmod 755 /usr/local/bin/rpcemu-*
 
 USER riscos
 
@@ -78,5 +81,5 @@ ENV PATH="$PATH:/rpcemu"
 ENV RPCEMU_VERSION="$RPCEMU_VERSION"
 ENV RO_VERSION=5
 
-CMD ["/usr/local/bin/start-rpcemu.sh"]
+CMD ["/usr/local/bin/rpcemu-start.sh"]
 EXPOSE 5901

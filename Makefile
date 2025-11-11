@@ -15,3 +15,6 @@ ro37: base
 
 ro5: base
 	DOCKER_BUILDKIT=1 docker buildx build ${ATTEST} -t gerph/rpcemu-5:${BASE_DOCKER_TAG} --build-arg BASE_DOCKER_TAG=${BASE_DOCKER_TAG} --build-arg RPCEMU_VERSION=${RPCEMU_VERSION} -f ro5.Dockerfile .
+
+riscos-build-online:
+
