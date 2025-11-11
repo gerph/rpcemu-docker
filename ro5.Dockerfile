@@ -62,7 +62,7 @@ COPY --from=builder /home/riscos /home/riscos
 COPY --from=builder /rpcemu /rpcemu
 COPY --from=builder /riscos /riscos
 COPY --from=builder /riscos-roms /riscos-roms
-COPY VNCResize,ffa /riscos/!Boot/Choices/Boot/PreDesk/VNCResize,ffa
+COPY VNCResize/rm32/VNCResize,ffa /riscos/!Boot/Choices/Boot/PreDesk/VNCResize,ffa
 
 USER root
 RUN chown -R riscos:riscos /rpcemu /riscos /riscos-roms

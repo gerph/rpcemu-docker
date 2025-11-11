@@ -1,0 +1,56 @@
+---
+# RISC OS CI build through build.riscos.online
+#
+# To reuse this configuration with your own repository:
+#
+#   - Create a .robuild.yaml to describe what should be built on RISC OS.
+#       - `jobs.build.script` should be a list of commands to run on RISC OS
+#       - `jobs.build.artifacts.path` should be the directory to zip.
+#   - Create a VersionNum file if you wish to use the automated versioning
+#     in the same style as the RISC OS sources. [optional]
+#   - Update the 2nd step ('give the archive a versioned name') to give a
+#     suitable name for the archive.
+#   - Update the artifacts path to include the same names.
+#
+
+
+riscos:
+
+  # Builds using the RISC OS Build service.
+  stage: build
+  script:
+    # Fetch the build client
+    - curl -s -L -o riscos-build-online https://github.com/gerph/robuild-client/releases/download/v0.05/riscos-build-online && chmod +x riscos-build-online
+
+    # Zip up the source to send to robuild
+    - zip -q9r /tmp/source-archive.zip * .robuild.yaml
+
+    # Send the archive file to build service
+    - ./riscos-build-online -i /tmp/source-archive.zip -a off -t 60 -o /tmp/built
+
+    # Rename the file we got
+    - |
+      if [[ -f VersionNum ]] ; then
+          version=$(sed '/MajorVersion / ! d ; s/.*MajorVersion *"\(.*\)"/\1/' VersionNum)
+      else
+          version=$(git rev-parse --short HEAD)
+      fi
+      echo "This is version: $version"
+      if [ -f /tmp/built,a91 ] ; then
+          cp /tmp/built,a91 "VNCResize-$version.zip"
+      else
+          echo "No archive was built?"
+          exit 1
+      fi
+
+  artifacts:
+    when: always
+    paths:
+      - "VNCResize-*.zip"
+
+  tags:
+    - linux
+
+#### Stages to execute ####
+stages:
+  - build

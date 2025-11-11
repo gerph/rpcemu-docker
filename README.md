@@ -15,6 +15,7 @@ These docker images contain:
 * A VNC server.
 * An installation of RPCEmu.
 * (depending on the container) The RISC OS 5 or RISC OS 3.7 images from https://www.marutan.net/rpcemu/easystart.html.
+* A small module to allow for VNC server resizes on mode change.
 
 ## Building
 

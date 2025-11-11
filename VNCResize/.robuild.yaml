@@ -1,0 +1,27 @@
+%YAML 1.0
+---
+
+# Example .robuild.yml file
+
+# Source is optional (NYI), and should be a URL to source the content from
+#source: <url>
+
+# Defines a list of jobs which will be performed.
+# Only 1 job will currently be executed.
+jobs:
+  build:
+    # Env defines system variables which will be used within the environment.
+    # Multiple variables may be assigned.
+    env:
+      "Sys$Environment": ROBuild
+      "BUILD32": 1
+      "Alias$AMU": "HostAMU %*0"
+
+    # Directory to change to before running script
+    #dir: <working directory>
+
+    # Commands which should be executed to perform the build.
+    # The build will terminate if any command returns a non-0 return code or an error.
+    script:
+      - amu -f Makefile ram
+      - Clipboard_FromFile rm32.VNCResize
