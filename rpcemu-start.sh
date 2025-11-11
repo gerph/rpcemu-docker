@@ -19,5 +19,21 @@ vncserver -name "RPCEmu $RPCEMU_VERSION, RISC OS $RO_VERSION" \
           -localhost no \
           >/dev/null 2>/dev/null
 
+# Once a second update the resolution of the session.
+(
+    while true ; do
+        sleep 1
+        if [[ -f /riscos/_Resolution,ffd ]] ; then
+            rpcemu-sync-size.sh
+        fi
+    done
+) &
+disown
+
 cd /rpcemu
-./rpcemu-recompiler
+if [[ -x rpcemu-recompiler ]] ; then
+    rpcemu=rpcemu-recompiler
+else
+    rpcemu=rpcemu-interpreter
+fi
+./"${rpcemu}"

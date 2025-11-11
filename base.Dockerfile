@@ -50,7 +50,7 @@ RUN cd /tmp && \
     wget -O rpcemu-${RPCEMU_VERSION}.tar.gz "https://www.marutan.net/rpcemu/cgi/download.php?sFName=${RPCEMU_VERSION}/rpcemu-${RPCEMU_VERSION}.tar.gz" && \
     tar zxf rpcemu-${RPCEMU_VERSION}.tar.gz && \
     cd rpcemu-${RPCEMU_VERSION}/src/qt5 && \
-        sed -i 's/CONFIG += debug_and_release/CONFIG += debug_and_release dynarec/' rpcemu.pro && \
+        if [ "$(uname -p)" != 'aarch64' ] ; then sed -i 's/CONFIG += debug_and_release/CONFIG += debug_and_release dynarec/' rpcemu.pro ; fi && \
         ./buildit.sh && \
         make && \
         cd ../.. && \

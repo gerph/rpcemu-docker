@@ -1,0 +1,111 @@
+/*******************************************************************
+ * File:        module
+ * Purpose:     VNCResize module interface
+ * Author:      YOUR NAME
+ ******************************************************************/
+
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "kernel.h"
+#include "swis.h"
+
+#include "riscos/Services.h"
+
+#include "modhead.h"
+#include "i_screeninfo.h"
+
+#define DEBUG
+
+#ifdef DEBUG
+#define dprintf if (1) printf
+#else
+#define dprintf if (0) printf
+#endif
+
+
+/***************************************************************************
+ * Function:     Mod_Init
+ * Description:  Initialise the module, setting up vectors, callbacks and
+ *               any other parts of the system necessary for the module to
+ *               function.
+ * Parameters:   tail        = pointer to command line (control terminated)
+ *               podule_base = address of podule module was started from, or
+ *                             NULL if none
+ *               pw          = private word for module
+ * On exit:      Return NULL for successful initialisation, or a pointer to
+ *               an error block if the module could not start properly.
+ **************************************************************************/
+_kernel_oserror *Mod_Init(const char *tail, int podule_base, void *pw)
+{
+    dprintf("Module VNCResize initialised\n");
+    return NULL;
+}
+
+
+/***************************************************************************
+ * Function:     Mod_Final
+ * Description:  Finalise the module, shutting down any systems necessary,
+ *               freeing vectors and releasing workspace
+ * Parameters:   fatal       = fatality indicator; 1 if fatal, 0 if
+ *                             reinitialising
+ *               podule_base = address of podule module was started from, or
+ *                             NULL if none
+ *               pw          = private word for module
+ * On exit:      Return 0 for successful finalisation, or a pointer to an
+ *               error block if module was not shutdown properly.
+ **************************************************************************/
+_kernel_oserror *Mod_Final(int fatal, int podule_base, void *pw)
+{
+    dprintf("Module VNCResize dying\n");
+    _swix(OS_RemoveCallBack, _INR(0, 1), ModeChanged_Entry, pw);
+    return NULL;
+}
+
+
+/***************************************************************************
+ * Function:     Mod_Service
+ * Description:  Service call handler routine. All services which are being
+ *               received by the module will be passed to this routine.
+ * Parameters:   service = service call number
+ *               r       = pointer to register block on entry
+ *               pw      = private word for module
+ * On exit:      Update register values on return by updating r.
+ **************************************************************************/
+void Mod_Service(int service, _kernel_swi_regs *r, void *pw)
+{
+    switch (service)
+    {
+        case Service_ModeChange:
+            _swix(OS_AddCallBack, _INR(0, 1), ModeChanged_Entry, pw);
+            break;
+    }
+}
+
+
+
+/***************************************************************************
+ * Function:     ModeChanged_Handler
+ * Description:  Generic handler function
+ * Parameters:   r  = pointer to register block on entry
+ *               pw = private word for module
+ * On exit:      Update r to alter return values
+ *               Return NULL to return with V clear
+ *               Return an error pointer to set V and r0
+ **************************************************************************/
+_kernel_oserror *ModeChanged_Handler(_kernel_swi_regs *r, void *pw)
+{
+    screensize_t size;
+    FILE *f;
+
+    if (!screen_getsize(&size))
+        return NULL; /* Couldn't read screen size - give up */
+
+    f = fopen("HostFS:$._Resolution", "wb");
+    if (f == NULL)
+        return NULL; /* Mode change file can't be written - don't bother */
+
+    fprintf(f, "%i %i\n", size.width, size.height);
+    fclose(f);
+    return NULL;
+}
