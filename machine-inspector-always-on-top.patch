@@ -1,0 +1,11 @@
+--- a/src/qt5/machine_inspector_window.cpp
++++ b/src/qt5/machine_inspector_window.cpp
+@@ -191,7 +191,7 @@ MachineInspectorWindow::MachineInspectorWindow(Emulator &emulator, QWidget *par
+ {
+ 	setWindowTitle(tr("Machine Inspector"));
+ 	setAttribute(Qt::WA_DeleteOnClose, false);
+-	setWindowFlag(Qt::Window, true);
++	setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
+
+ 	summary_label->setText(tr("Awaiting snapshot"));
+ 	summary_label->setTextInteractionFlags(Qt::TextSelectableByMouse);

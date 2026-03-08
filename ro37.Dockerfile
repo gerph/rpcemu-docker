@@ -2,7 +2,7 @@ ARG BASE_DOCKER_TAG=latest
 
 FROM gerph/rpcemu-base:${BASE_DOCKER_TAG} AS builder
 
-ARG RPCEMU_VERSION=0.9.3
+ARG RPCEMU_VERSION=0.9.5
 
 # Install ROM image (and disk image if necessary)
 
@@ -11,7 +11,7 @@ RUN if [ "$RPCEMU_VERSION" = '0.9.3' ] ; then \
         BUNDLE_ID=19XLe77_VabVzScjzEH-_23fr0xoLndkn ; \
     elif [ "$RPCEMU_VERSION" = '0.9.4' ] ; then \
         BUNDLE_ID=12V6sRpX6wia7z7D4qcmzyXMmdWAhra60 ; \
-    elif [ "$RPCEMU_VERSION" = '0.9.5' ] ; then \
+    elif [ "$RPCEMU_VERSION" = '0.9.5' ] || [ "$RPCEMU_VERSION" = "extended" ] ; then \
         BUNDLE_ID=1HWd67HYNRsIh9wgQZZT06GsANlYd4V4i ; \
     else \
         echo "Unsupported RPCEMU_VERSION: $RPCEMU_VERSION" ; \
@@ -25,10 +25,10 @@ RUN if [ "$RPCEMU_VERSION" = '0.9.3' ] ; then \
     cp "RPCEmu - 371"/rpc.cfg /rpcemu/ && \
     rm -rf rpcemu-bundle.zip "RPCEmu - 371/"
 
-ADD --chown=riscos:riscos bash_profile /home/riscos/.bash_profile
-
 # Ensure that the sound is turned off - we don't have sound in the docker container
 RUN sed -i s/sound_enabled=1/sound_enabled=0/ rpcemu/rpc.cfg
+
+ADD --chown=riscos:riscos bash_profile /home/riscos/.bash_profile
 
 
 FROM ubuntu:24.04
@@ -49,23 +49,23 @@ RUN useradd riscos && \
 USER root
 RUN export DEBIAN_FRONTEND="noninteractive" ; \
     apt-get update && \
-    apt-get dist-upgrade -y && \
-    apt-get install -y tigervnc-standalone-server fluxbox \
+    apt-get install -y --no-install-recommends tigervnc-standalone-server fluxbox \
                         libqt5gui5 \
                         libqt5multimedia5-plugins \
                         xcvt x11-utils wmctrl \
+                        x11-xserver-utils \
                      && \
-    rm -rf ~/.cache/pip /var/lib/apt/lists
+    ln -s /bin/true /usr/local/bin/fbsetbg && \
+    rm -rf /var/lib/apt/lists/*
 
 USER riscos
-COPY --from=builder /home/riscos /home/riscos
-COPY --from=builder /rpcemu /rpcemu
-COPY --from=builder /riscos /riscos
-COPY --from=builder /riscos-roms /riscos-roms
-COPY VNCResize/rm32/VNCResize,ffa /riscos/!Boot/Choices/Boot/PreDesk/VNCResize,ffa
+COPY --chown=riscos:riscos --from=builder /home/riscos /home/riscos
+COPY --chown=riscos:riscos --from=builder /rpcemu /rpcemu
+COPY --chown=riscos:riscos --from=builder /riscos /riscos
+COPY --chown=riscos:riscos --from=builder /riscos-roms /riscos-roms
+COPY --chown=riscos:riscos VNCResize/rm32/VNCResize,ffa /riscos/!Boot/Choices/Boot/PreDesk/VNCResize,ffa
 
 USER root
-RUN chown -R riscos:riscos /rpcemu /riscos /riscos-roms
 COPY rpcemu-start.sh /usr/local/bin/rpcemu-start.sh
 COPY rpcemu-sync-size.sh /usr/local/bin/rpcemu-sync-size.sh
 RUN chmod 755 /usr/local/bin/rpcemu-*

@@ -12,7 +12,7 @@
 
 FROM ubuntu:24.04
 
-ARG RPCEMU_VERSION=0.9.3
+ARG RPCEMU_VERSION=0.9.5
 
 # Add user we're going to run under (without a password)
 RUN useradd riscos && \
@@ -22,22 +22,26 @@ RUN useradd riscos && \
 # Install the VNC server, with the build system and libraries.
 # The password for the VNC server is 'password'.
 USER root
-RUN apt-get update && \
-    DEBIAN_FRONTEND="noninteractive"  apt-get install -y tigervnc-standalone-server fluxbox locales \
+RUN export DEBIAN_FRONTEND="noninteractive" ; \
+    apt-get update && \
+    apt-get install -y --no-install-recommends tigervnc-standalone-server fluxbox locales \
                         build-essential \
                         qtbase5-dev \
                         qtmultimedia5-dev \
                         libqt5multimedia5-plugins \
                         python3-pip \
-                        wget unzip rsync \
+                        wget unzip rsync patch \
+                        git \
+                        x11-xserver-utils \
                      && \
+    ln -s /bin/true /usr/local/bin/fbsetbg && \
     locale-gen en_US.UTF-8 && \
     mkdir -p /home/riscos/.vnc && \
     echo "29g8/XJ6FFg=" | base64 -d > /home/riscos/.vnc/passwd && \
     chown -R riscos:riscos /home/riscos/.vnc && \
     chmod 0600 /home/riscos/.vnc/passwd && \
     pip3 install --break-system-packages gdown && \
-    rm -rf ~/.cache/pip /var/lib/apt/lists && \
+    rm -rf ~/.cache/pip /var/lib/apt/lists/* && \
     mkdir -p /rpcemu /riscos /riscos-roms && \
     chown riscos:riscos /rpcemu /riscos /riscos-roms && \
     ln -s /rpcemu /home/riscos/rpcemu
@@ -46,9 +50,19 @@ RUN apt-get update && \
 # Build RPCEmu
 WORKDIR /home/riscos
 USER riscos
+ADD machine-inspector-always-on-top.patch /tmp/machine-inspector-always-on-top.patch
 RUN cd /tmp && \
-    wget -O rpcemu-${RPCEMU_VERSION}.tar.gz "https://www.marutan.net/rpcemu/cgi/download.php?sFName=${RPCEMU_VERSION}/rpcemu-${RPCEMU_VERSION}.tar.gz" && \
-    tar zxf rpcemu-${RPCEMU_VERSION}.tar.gz && \
+    if [ "$RPCEMU_VERSION" = "extended" ]; then \
+        git clone https://github.com/andrewtimmins/rpcemu-extended.git && \
+        cd rpcemu-extended && \
+        git checkout 48da8c6 && \
+        patch -p1 < /tmp/machine-inspector-always-on-top.patch && \
+        cd .. ; \
+    else \
+        wget -O rpcemu-${RPCEMU_VERSION}.tar.gz "https://www.marutan.net/rpcemu/cgi/download.php?sFName=${RPCEMU_VERSION}/rpcemu-${RPCEMU_VERSION}.tar.gz" && \
+        tar zxf rpcemu-${RPCEMU_VERSION}.tar.gz && \
+        rm -rf rpcemu-${RPCEMU_VERSION}.tar.gz ; \
+    fi && \
     cd rpcemu-${RPCEMU_VERSION}/src/qt5 && \
         if [ "$(uname -p)" != 'aarch64' ] ; then sed -i 's/CONFIG += debug_and_release/CONFIG += debug_and_release dynarec/' rpcemu.pro ; fi && \
         ./buildit.sh && \
@@ -61,8 +75,9 @@ RUN cd /tmp && \
     mv /rpcemu/roms/* /riscos-roms/ && rmdir /rpcemu/roms && \
     ln -s /riscos /rpcemu/hostfs && \
     ln -s /riscos-roms /rpcemu/roms && \
-    rm -rf /tmp/rpcemu-${RPCEMU_VERSION}.tar.gz /tmp/rpcemu-${RPCEMU_VERSION}
+    rm -rf /tmp/rpcemu-${RPCEMU_VERSION}
 
+# Ensure that the sound is turned off - we don't have sound in the docker container
 RUN sed -i s/sound_enabled=1/sound_enabled=0/ rpcemu/rpc.cfg
 
 # Configure the fluxbox environment to hide most parts of it.

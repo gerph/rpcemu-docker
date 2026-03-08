@@ -1,7 +1,11 @@
 # Build all the docker files
 
 RPCEMU_VERSION ?= 0.9.5
+ifeq ($(RPCEMU_VERSION),extended)
+BASE_DOCKER_TAG ?= debug
+else
 BASE_DOCKER_TAG ?= latest
+endif
 
 #ATTEST=--attest type=provenance,mode=max
 PROVENANCE=--provenance false
@@ -23,8 +27,8 @@ ro5: base ${VNCRESIZE}
 
 # Building VNCResize
 riscos-build-online:
-	if [[ "$$(uname -s)" != "Darwin" ]] ; then curl -s -L -o riscos-build-online https://github.com/gerph/robuild-client/releases/download/v0.07/riscos-build-online && chmod +x riscos-build-online ; fi
-	if [[ "$$(uname -s)" == "Darwin" ]] ; then ln -sf $$(which riscos-build-online) riscos-build-online ; fi
+	if [ "$$(uname -s)" != "Darwin" ] ; then curl -s -L -o riscos-build-online https://github.com/gerph/robuild-client/releases/download/v0.07/riscos-build-online && chmod +x riscos-build-online ; fi
+	if [ "$$(uname -s)" = "Darwin" ] ; then ln -sf $$(which riscos-build-online) riscos-build-online ; fi
 
 ${VNCRESIZE}: riscos-build-online \
 			  VNCResize/Makefile,fe1 \
