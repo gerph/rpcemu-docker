@@ -1,0 +1,6 @@
+#!/bin/sh
+##
+# VNC session startup script.
+# Launches matchbox window manager.
+#
+exec matchbox-window-manager
