@@ -24,7 +24,7 @@ RUN useradd riscos && \
 USER root
 RUN export DEBIAN_FRONTEND="noninteractive" ; \
     apt-get update && \
-    apt-get install -y --no-install-recommends tigervnc-standalone-server fluxbox locales \
+    apt-get install -y --no-install-recommends tigervnc-standalone-server matchbox-window-manager locales \
                         build-essential \
                         qtbase5-dev \
                         qtmultimedia5-dev \
@@ -34,7 +34,6 @@ RUN export DEBIAN_FRONTEND="noninteractive" ; \
                         git \
                         x11-xserver-utils \
                      && \
-    ln -s /bin/true /usr/local/bin/fbsetbg && \
     locale-gen en_US.UTF-8 && \
     mkdir -p /home/riscos/.vnc && \
     echo "29g8/XJ6FFg=" | base64 -d > /home/riscos/.vnc/passwd && \
@@ -80,10 +79,8 @@ RUN cd /tmp && \
 # Ensure that the sound is turned off - we don't have sound in the docker container
 RUN sed -i s/sound_enabled=1/sound_enabled=0/ rpcemu/rpc.cfg
 
-# Configure the fluxbox environment to hide most parts of it.
-ADD --chown=riscos:riscos fluxbox-init /home/riscos/.fluxbox/init
-ADD --chown=riscos:riscos fluxbox-menu /home/riscos/.fluxbox/menu
-ADD --chown=riscos:riscos fluxbox-windowmenu /home/riscos/.fluxbox/windowmenu
+# Configure the VNC session to use matchbox window manager.
+ADD --chown=riscos:riscos --chmod=755 xstartup /home/riscos/.vnc/xstartup
 
 ENV PATH="$PATH:/rpcemu"
 CMD ["bash", "-c", "export DISPLAY=:1 USER=riscos && vncserver -geometry 1280x1024 -localhost no >/dev/null 2>/dev/null && cd rpcemu && ./rpcemu-recompiler"]

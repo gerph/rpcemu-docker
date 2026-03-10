@@ -49,13 +49,12 @@ RUN useradd riscos && \
 USER root
 RUN export DEBIAN_FRONTEND="noninteractive" ; \
     apt-get update && \
-    apt-get install -y --no-install-recommends tigervnc-standalone-server fluxbox \
+    apt-get install -y --no-install-recommends tigervnc-standalone-server matchbox-window-manager \
                         libqt5gui5 \
                         libqt5multimedia5-plugins \
                         xcvt x11-utils wmctrl \
                         x11-xserver-utils \
                      && \
-    ln -s /bin/true /usr/local/bin/fbsetbg && \
     rm -rf /var/lib/apt/lists/*
 
 USER riscos
@@ -66,9 +65,8 @@ COPY --chown=riscos:riscos --from=builder /riscos-roms /riscos-roms
 COPY --chown=riscos:riscos VNCResize/rm32/VNCResize,ffa /riscos/!Boot/Choices/Boot/PreDesk/VNCResize,ffa
 
 USER root
-COPY rpcemu-start.sh /usr/local/bin/rpcemu-start.sh
-COPY rpcemu-sync-size.sh /usr/local/bin/rpcemu-sync-size.sh
-RUN chmod 755 /usr/local/bin/rpcemu-*
+COPY --chmod=755 rpcemu-start.sh /usr/local/bin/rpcemu-start.sh
+COPY --chmod=755 rpcemu-sync-size.sh /usr/local/bin/rpcemu-sync-size.sh
 
 USER riscos
 
