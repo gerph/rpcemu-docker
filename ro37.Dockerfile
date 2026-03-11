@@ -7,9 +7,7 @@ ARG RPCEMU_VERSION=0.9.5
 # Install ROM image (and disk image if necessary)
 
 # Downloads from GDrive
-RUN if [ "$RPCEMU_VERSION" = '0.9.3' ] ; then \
-        BUNDLE_ID=19XLe77_VabVzScjzEH-_23fr0xoLndkn ; \
-    elif [ "$RPCEMU_VERSION" = '0.9.4' ] ; then \
+RUN if [ "$RPCEMU_VERSION" = '0.9.4' ] ; then \
         BUNDLE_ID=12V6sRpX6wia7z7D4qcmzyXMmdWAhra60 ; \
     elif [ "$RPCEMU_VERSION" = '0.9.5' ] || [ "$RPCEMU_VERSION" = "extended" ] ; then \
         BUNDLE_ID=1HWd67HYNRsIh9wgQZZT06GsANlYd4V4i ; \
