@@ -13,6 +13,22 @@ export XDG_RUNTIME_DIR=$HOME/.run
 mkdir -p "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
 
+# Apply override volume if present and non-empty
+if stat /override/roms/* > /dev/null 2>&1 ; then
+    echo "Applying override: /override/roms -> /riscos-roms"
+    rsync -a --delete /override/roms/ /riscos-roms/
+fi
+
+if stat /override/hostfs/* > /dev/null 2>&1 ; then
+    if [ "$OVERRIDE_MERGE" = "1" ] ; then
+        echo "Applying override (merge): /override/hostfs -> /riscos"
+        rsync -a /override/hostfs/ /riscos/
+    else
+        echo "Applying override (replace): /override/hostfs -> /riscos"
+        rsync -a --delete --exclude='!Boot/Choices/Boot/PreDesk/VNCResize,ffa' /override/hostfs/ /riscos/
+    fi
+fi
+
 # Start the VNC server
 vncserver -name "RPCEmu $RPCEMU_VERSION, RISC OS $RO_VERSION" \
           -geometry 1280x1024 \

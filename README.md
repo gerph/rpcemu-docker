@@ -77,6 +77,26 @@ You can replace the entire HostFS disc by specifying a mount point at `/riscos`,
 docker run -it --init -v $PWD:/riscos --rm -p 5901:5901 gerph/rpcemu-3.7
 ```
 
+## Override volume
+
+It is possible to replace the ROMs and/or HostFS contents before RPCEmu starts by mounting an override volume at `/override`. This is useful for supplying nightly builds or custom configurations without rebuilding the image.
+
+The override volume may contain the following subdirectories:
+
+* `roms/` - replaces the contents of `/riscos-roms` (always a full replace).
+* `hostfs/` - replaces or merges into `/riscos`, depending on the `OVERRIDE_MERGE` environment variable:
+  * By default (replace): the contents of `/riscos` are replaced with those from `hostfs/`. The `VNCResize` module installed by the image at `!Boot/Choices/Boot/PreDesk/VNCResize,ffa` is always preserved, even in replace mode.
+  * If `OVERRIDE_MERGE=1`: the contents of `hostfs/` are merged into `/riscos`, preserving existing files.
+
+Each subdirectory is optional. If a subdirectory is absent or empty, the corresponding target is left untouched.
+
+For example, to supply a nightly RISC OS 5 ROM and HardDisc4, use the `get-ro5-nightly.sh` script to populate a local `ro5-nightly/` directory, then mount it as the override volume and merge HardDisc4:
+
+```
+./get-ro5-nightly.sh
+docker run -it --init --rm -p 5901:5901 -v $PWD/ro5-nightly:/override -e OVERRIDE_MERGE=1 gerph/rpcemu-5
+```
+
 ## Image tags
 
 The following tags (and images) are available on Docker Hub:
