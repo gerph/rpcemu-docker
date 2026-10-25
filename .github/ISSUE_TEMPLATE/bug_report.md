@@ -3,7 +3,7 @@ name: Bug report
 about: Something that's not right about the project
 title: ''
 labels: bug
-assignees: ''
+assignees: 'gerph'
 
 ---
 
