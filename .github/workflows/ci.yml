@@ -1,0 +1,25 @@
+---
+# Check that the RPCEmu base docker image still builds.
+#
+# The ro37 and ro5 images are not built here: they download ROM bundles and
+# need the RISC OS build service to build VNCResize.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build the RPCEmu base image
+        run: make base
+
+      - name: Check that RPCEmu is installed in the image
+        run: docker run --rm --entrypoint sh gerph/rpcemu-base:latest -c 'test -x /rpcemu/rpcemu-recompiler && command -v vncserver'
