@@ -10,7 +10,7 @@
 #   /riscos - The RPCEmu `hostfs` directory
 #   /riscos-roms - a directory containing ROMs
 
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 ARG RPCEMU_VERSION=0.9.5
 

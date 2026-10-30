@@ -29,7 +29,7 @@ RUN sed -i s/sound_enabled=1/sound_enabled=0/ rpcemu/rpc.cfg
 ADD --chown=riscos:riscos bash_profile /home/riscos/.bash_profile
 
 
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 
 ARG RPCEMU_VERSION
 
